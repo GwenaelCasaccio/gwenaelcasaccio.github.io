@@ -112,8 +112,8 @@ static void test_increment(void **state) {
 As I previously say the method **pthread_mutex_lock** is mocked by the method **__wrap_pthread_mutex_lock**, 
 the function expected_value(__wrap_pthread_mutex_lock, mutex, &mutex); ensures that the mocked method
 is well called by the mutex argument variable (this is checked with the check_expected function in the mocked function).
-So the argument of the mock is configured te same is to be done for the returned value with ****will_return*** 
-(the result is used with the corresponding function mock_type(int)).
+So the argument of the mock is configured te same is to be done for the returned value with **will_return** 
+(the result is used with the corresponding function **mock_type(int)**).
 
 What is really powerful with mock objects is that I can control functions and in the previous example I can return
 an error when the pthread_mutex_lock is called and check that perror and fail functions are called. And the value is still
