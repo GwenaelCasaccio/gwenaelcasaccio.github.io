@@ -67,7 +67,7 @@ when the mock function **pthread_mutext_lock** is called
 ## How to mock a function
 
 There is the **wrap** option available in the GNU or LLVM linker which wrap the function pass as an argument to the wrapped function 
-**__wrap_original_name_of_the_function**.
+**__wrap_original_name_of_the_function** and the original function is still accessible with the **__real_original_name_of_the_function**.
 
 {% highlight bash %}
 ld -Wl,-wrap=pthread_mutex_lock -Wl,-wrap=pthread_mutex_unlock -Wl,-wrap=perror  -Wl,-wrap=fail
@@ -92,7 +92,7 @@ int _wrap__pthread_mutex_unlock(pthread_mutex_lock *mutex) {
 {% endhighlight %}
 
 
-## configure the mock objects with cmocka
+## write a test with mock objects
 
 In the testing method the mock will be configured to check the arguments and returns the expected values:
 {% highlight c %}
@@ -109,15 +109,13 @@ static void test_increment(void **state) {
 }
 {% endhighlight %}
 
-In that example the method pthread_mutex_lock is mocked by the method __wrap_pthread_mutex_lock, 
+As I previously say the method **pthread_mutex_lock** is mocked by the method **__wrap_pthread_mutex_lock**, 
 the function expected_value(__wrap_pthread_mutex_lock, mutex, &mutex); ensures that the mocked method
-is well called by the mutex argument variable (checked with the check_expected function).
+is well called by the mutex argument variable (this is checked with the check_expected function in the mocked function).
+So the argument of the mock is configured te same is to be done for the returned value with ****will_return*** 
+(the result is used with the corresponding function mock_type(int)).
 
-and will_return will\_return (the result is used with the corresponding function mock_type(int))
-unfortunatelly there is a restriction with cmocka with cannot check if a mock function is never called.
-So we cannot check the perror and fail mock functions are never called (after we trick with a global static variable).
-
-What is really interesting with mock objects is that I can control functions and in the previous example I can return
+What is really powerful with mock objects is that I can control functions and in the previous example I can return
 an error when the pthread_mutex_lock is called and check that perror and fail functions are called. And the value is still
 the same.
 
@@ -136,8 +134,10 @@ static void test_increment(void **state) {
 
 # Conclusion
 
-So that's it I hope that you're convince to add mock functions and use [cmocka][cmocka] testing framework!
+So that's it I hope that you're convince to add mock functions and use [cmocka][cmocka] testing framework! You can find a real
+example of mock in the [forward_object.c][forward_object.c]. Of course the API provides more functions like controlling the number of times a mock function is called.
 
 [gst]: https://github.com/GwenaelCasaccio/smalltalk
 [gnu-smalltalk]: https://github.com/gnu-smalltalk/smalltalk
+[forward_object.c]: https://github.com/GwenaelCasaccio/smalltalk/blob/main/tests/vm/forward_object.c
 [cmocka]: https://cmocka.org/
