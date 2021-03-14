@@ -135,9 +135,10 @@ static void test_increment(void **state) {
 # Conclusion
 
 So that's it I hope that you're convince to add mock functions and use [cmocka][cmocka] testing framework! You can find a real
-example of mock in the [forward_object.c][forward_object.c]. Of course the API provides more functions like controlling the number of times a mock function is called.
+example of mock in the [forward_object.c][forward_object.c]. Of course the [API][cmocka-api] provides more functions like controlling the number of times a mock function is called.
 
 [gst]: https://github.com/GwenaelCasaccio/smalltalk
 [gnu-smalltalk]: https://github.com/gnu-smalltalk/smalltalk
 [forward_object.c]: https://github.com/GwenaelCasaccio/smalltalk/blob/main/tests/vm/forward_object.c
 [cmocka]: https://cmocka.org/
+[cmocka-api]: https://api.cmocka.org/
