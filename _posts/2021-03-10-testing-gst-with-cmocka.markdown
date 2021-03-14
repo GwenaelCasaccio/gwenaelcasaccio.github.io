@@ -4,10 +4,25 @@ title:  "Testing GST (aka GNU Smalltalk) with cmocka"
 date:   2021-03-10 09:01:28 +0100
 categories: gst cmocka tests c
 ---
-[GST][gst] is an gently fork of the open source smaltalk implementation: [GNU Smalltalk][gnu-smalltalk].
-While working on it by doing some improvement or some bug fixes, I've faced another issue: *the lack of tests*
-There are some kinds of integrations testing with Smalltalk tests, but no unit tests are done for the virtual machine itself.
-After looking to some C framework, I choose  [cmocka][cmocka] because it provides:
+
+# What is GST
+[GST][gst] is an gentle fork of the open source Smalltalk-80 implementation: [GNU Smalltalk][gnu-smalltalk].
+I started locally to improve and fix some parts of it for my own interest and decided to continue o work on
+it mostly for the fun.
+
+What improvements:
+  * Object layout is much more flexible: adding a new slot (for learning, hacking, ...) is easier and require only localized changes (developper is warmed with a static_assert message)
+  * Object table in 64 bits is improved and the stress test is green - you can allocate lot of object before running out of object pointers
+  * Some misc issues raised by running the GCC sanitizer
+  * Recenlty added an initial support of a multithreaded VM support - it's basic but hey it works
+  * Adding vm tests with mock
+
+# Testing the GST virtual machine
+While working on the virtual machine I was frustrated by the difficulty to test it. Basically the virtual machine code was not tested in anyway.
+So I've started to add some basic tests but I hadn't choose any testing framework for the C language. I've find multiple framwork but most of them
+lacks to support mock objects. And for the some of the framwork supporting mocking the implementation was relying on assembly and don't work on some
+OSes and architectures - as an hacker point of view certainly a lot of stuff to learn and really interesting - but I want a simple and relyable mocking
+support. That's why I choose [cmocka][cmocka], it provides some really nice features:
  * Support for mock objects.
  * Test fixtures.
  * Only requires a C library
@@ -23,9 +38,11 @@ The point where I want to focus here is the support for mock objects.
 # What is a mock?
 
 A mock object is a simulated object of a real object. In C we want to simulate the behavior 
-of a function by a function that simulate that function. 
+of a function by another function that will simulate that function.
 
-For instance we want to test a function that will lock a mutex and unlock a mutex and inside increment a variable:
+## Mock example
+
+Here is a small example of a function that will lock a mutex and unlock a mutex and inside increment a variable:
 
 {% highlight c %}
 void increment_by_one(void) {
@@ -43,10 +60,20 @@ void increment_by_one(void) {
 }
 {% endhighlight %}
 
-With the mock functions we can simulate the pthread\_mutex\_lock, pthread\_mutex\_unlock, perror, fail.
+This simple example highlight the need of mock objects: how can we simulate an error when calling **pthread_mutext_lock** 
+and ensure that **perror, fail** functions are called for instance. And we control what is the behavior (the result for instance)
+when the mock function **pthread_mutext_lock** is called
 
-To enable working with mocks we can change the linker and add an option to "wrap" the methods to mock.
-We have to define in the test source:
+## How to mock a function
+
+There is the **wrap** option available in the GNU or LLVM linker which wrap the function pass as an argument to the wrapped function 
+**__wrap_original_name_of_the_function**.
+
+{% highlight bash %}
+ld -Wl,-wrap=pthread_mutex_lock -Wl,-wrap=pthread_mutex_unlock -Wl,-wrap=perror  -Wl,-wrap=fail
+{% endhighlight %}
+
+Now we can define in the test source:
 
 {% highlight c %}
 int _wrap___pthread_mutex_lock(pthread_mutex_lock *mutex) {
@@ -60,8 +87,12 @@ int _wrap__pthread_mutex_unlock(pthread_mutex_lock *mutex) {
 
   return mock_type(int);
 }
+
+...
 {% endhighlight %}
 
+
+## configure the mock objects with cmocka
 
 In the testing method the mock will be configured to check the arguments and returns the expected values:
 {% highlight c %}
@@ -78,11 +109,11 @@ static void test_increment(void **state) {
 }
 {% endhighlight %}
 
-In that example the method pthread\_mutex\_lock is mocked by the method __wrap_pthread_mutex_lock, 
-the function expected_value(\_\_wrap\_pthread\_mutex\_lock, mutex, &mutex); ensures that the mocked method
-is well called by the mutex argument variable (checked with the check\_expected function).
+In that example the method pthread_mutex_lock is mocked by the method __wrap_pthread_mutex_lock, 
+the function expected_value(__wrap_pthread_mutex_lock, mutex, &mutex); ensures that the mocked method
+is well called by the mutex argument variable (checked with the check_expected function).
 
-and will_return will\_return (the result is used with the corresponding function mock\_type(int))
+and will_return will\_return (the result is used with the corresponding function mock_type(int))
 unfortunatelly there is a restriction with cmocka with cannot check if a mock function is never called.
 So we cannot check the perror and fail mock functions are never called (after we trick with a global static variable).
 
@@ -102,6 +133,8 @@ static void test_increment(void **state) {
   assert_true(counter == 0);
 }
 {% endhighlight %}
+
+# Conclusion
 
 So that's it I hope that you're convince to add mock functions and use [cmocka][cmocka] testing framework!
 
