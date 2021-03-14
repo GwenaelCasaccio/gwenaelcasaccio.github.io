@@ -18,7 +18,7 @@ What improvements:
   * Adding vm tests with mock
 
 # Testing the GST virtual machine
-While working on the virtual machine I was frustrated by the difficulty to test it. Basically the virtual machine code was not tested in anyway.
+While working on the virtual machine I was frustrated by the difficulty to test it. Basically the virtual machine code was not tested with unit test (there are some kind of integration testing).
 So I've started to add some basic tests but I hadn't choose any testing framework for the C language. I've find multiple framwork but most of them
 lacks to support mock objects. And for the some of the framwork supporting mocking the implementation was relying on assembly and don't work on some
 OSes and architectures - as an hacker point of view certainly a lot of stuff to learn and really interesting - but I want a simple and relyable mocking
